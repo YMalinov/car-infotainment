@@ -11,7 +11,8 @@ The following modules are used:
 	<li>1x 16x2 SerLCD display </li>
 </ul>
 <br/>
-If setup correctly, the screen should display the information in the following way:
+If setup correctly, the screen should display the information in the following way (without the quotes):
 <ul>
-	<li><pre></pre></li>
+	<li><pre>"I: 25.0 O: 35.0 "</pre> (input and output temperature, respectively)</li>
+	<li><pre>"N  358.0o 1000m^"</pre> (compass direction - N, NE, E, SE, S, SW, W, NW; compass heading in degrees; altitude in meters; and display refresh animation)</li>
 </ul>
