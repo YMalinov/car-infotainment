@@ -1,5 +1,8 @@
 #include <OneWire.h>
+#include <Wire.h>
 #include <SoftwareSerial.h>
+#include <LPS_Pressure.h>
+#include <LSM303_Magnet.h>
 
 // in milliseconds
 const int TempRefreshInterval = 2000;
@@ -12,6 +15,26 @@ const int DS18S20_PinOut = 3;
 // screen TX and RX pins (RX pin is needed and yet not used)
 const int ScreenTxPin = 10;
 const int ScreenRxPin = 11;
+
+// screen dim button pin
+const int ScreenDimBtnPin = 7;
+
+// screen dim values
+const int ScreenDimOn = 140;
+const int ScreenDimOff = 150;
+
+// AltIMU specific settings
+LSM303::vector<int16_t> CompassMin = LSM303::vector<int16_t> {  +858,   +324,  -2232};
+LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> {  +868,   +340,  -2216};
+
+
+// AltIMU sensors
+LPS pressureSensor;
+LSM303 magneticSensor;
+
+// AltIMU sensors detection
+boolean pressureSensorDetected = false;
+boolean magneticSensorDetected = false;
 
 // last screen symbol on the second line
 char animationChars[] = "^<^>";
@@ -28,25 +51,54 @@ void setup(void) {
   screenSerial.begin(9600);
 
   clearScreen();
-  changeScreenBrightness(140);
+  //  changeScreenBrightness(140);
+
+  Wire.begin();
+
+  if (pressureSensor.init()) {
+    pressureSensorDetected = true;
+    pressureSensor.enableDefault();
+  }
+
+  if (magneticSensor.init()) {
+    magneticSensorDetected = true;
+    magneticSensor.enableDefault();
+
+    magneticSensor.m_min = CompassMin;
+    magneticSensor.m_max = CompassMax;
+  }
+
+  pinMode(ScreenDimBtnPin, INPUT);
 }
 
 void loop(void) {
+
+
   // temperature is in Celsius
   float temperatureIn = getTemp(tempIn);
   float temperatureOut = getTemp(tempOut);
 
-  // still don't have the AltIMU board, just write test values
-  // on the screen
-  char direction[] = "NE";
+  refreshDisplayFirstLine(temperatureIn, temperatureOut);
 
   // heading is in degrees
-  float heading = 360;
+  float heading = -1.0;
+  if (magneticSensorDetected) {
+    magneticSensor.read();
+    heading = magneticSensor.heading();
+  }
+
+  char *direction;
+  getHeadingAsString(heading, &direction);
 
   // altitude is in meters
-  int altitude = 1000;
+  int altitude = -1;
+  if (pressureSensorDetected) {
+    float pressure = pressureSensor.readPressureMillibars();
+    float altitudeAsFloat = pressureSensor.pressureToAltitudeMeters(pressure);
 
-  refreshDisplayFirstLine(temperatureIn, temperatureOut);
+    altitude = (int)altitudeAsFloat;
+  }
+
   refreshDisplaySecondLine(direction, heading, altitude);
 
   waitAndUpdateAnimation(TempRefreshInterval, 4);
@@ -91,13 +143,23 @@ void refreshDisplaySecondLine(char dir[], float heading, int altitude) {
   changeCursorPosition(16);
   screenSerial.write(dir);
 
-  String head = String(heading, 1);
+  String head = "";
+  if (heading == -1.0) {
+    head = "n/a ";
+  } else {
+    head = String(heading, 1);
+  }
   writeValueRightToLeft(head, 24, 5);
 
   changeCursorPosition(24);
   screenSerial.write("o");
 
-  String alt = String(altitude);
+  String alt = "";
+  if (altitude == -1) {
+    alt = "n/a ";
+  } else {
+    alt = String(altitude);
+  }
   writeValueRightToLeft(alt, 30, 4);
 
   changeCursorPosition(30);
@@ -108,6 +170,7 @@ void waitAndUpdateAnimation(int totalTime, int timesToUpdateAnimation) {
   int dividedDelay = totalTime / timesToUpdateAnimation;
   for (int i = 0; i < timesToUpdateAnimation; i++) {
     updateAnimation();
+    checkDimButton();
     delay(dividedDelay);
   }
 }
@@ -133,6 +196,14 @@ void writeValueRightToLeft(String val, int pos, int maxLen) {
     } else {
       screenSerial.write(" ");
     }
+  }
+}
+
+void checkDimButton() {
+  if (digitalRead(ScreenDimBtnPin) == HIGH) {
+    changeScreenBrightness(ScreenDimOn);
+  } else {
+    changeScreenBrightness(ScreenDimOff);
   }
 }
 
