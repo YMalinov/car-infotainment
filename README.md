@@ -7,7 +7,7 @@ I've renamed the AltIMU sensors' libraries, so their names are more descriptive 
 The following modules are used:
 <ul>
 	<li>1x Arduino UNO r3 board </li>
-	<li>2x DS18S20 water proof temperature sensors </li>
+	<li>2x DS18B20 water proof temperature sensors </li>
 	<li>1x AltIMU board </li>
 	<li>1x 16x2 SerLCD display </li>
 </ul>
@@ -17,7 +17,7 @@ Currently the following libraries are used:
 	<li>L3G gyroscope library from Pololu</li>
 	<li>LPS pressure sensor library from Pololu</li>
 	<li>LSM303 magnetic sensor library from Pololu</li>
-	<li>OneWire (for the DS18S20 temp sensors)</li>
+	<li>OneWire (for the DS18B20 temp sensors)</li>
 	<li>Dallas Temperature Control (for the DS18S20 temp sensors)</li>
 </ul>
 <br/>
@@ -26,3 +26,10 @@ If setup correctly, the screen should display the information in the following w
 	<li><pre>"I: 25.0 O: 35.0 "</pre> (input and output temperature, respectively)</li>
 	<li><pre>"N  358.0o 1000m^"</pre> (compass direction - N, NE, E, SE, S, SW, W, NW; compass heading in degrees; altitude in meters; and display refresh animation)</li>
 </ul>
+<br/>
+TODO:
+<ol>
+	<li>Make getting temperature values async.</li>
+	<li>Make getting compass and altitude values async.</li>
+	<li>Add a screen dim button and decide where to put it in the car.</li>
+</ol>
