@@ -1,6 +1,7 @@
-#include <OneWire.h>
-#include <Wire.h>
-#include <SoftwareSerial.h>
+#include <OneWire.h> // used by temperature sensors
+#include <DallasTemperature.h> // used by temperature sensors
+#include <Wire.h> // used by lps pressure and lsm303 sensors
+#include <SoftwareSerial.h> // used by display
 #include <LPS_Pressure.h>
 #include <LSM303_Magnet.h>
 
@@ -8,25 +9,34 @@
 const int TempRefreshInterval = 2000;
 const int AltIMURefreshInterval = 500;
 
-//DS18S20 Signal pins
-const int DS18S20_PinIn = 2;
-const int DS18S20_PinOut = 3;
+// temperature sensors OneWire signal pin
+const int TemperatureSensorsPin = 3;
+
+// temperature chip i/o
+OneWire oneWire(TemperatureSensorsPin);
+DallasTemperature tempSensors(&oneWire);
+
+//DS18S20 hardware addresses
+DeviceAddress InTemp =  { 0x28, 0x4E, 0x76, 0x74, 0x06, 0x00, 0x00, 0xFE };
+DeviceAddress OutTemp = { 0x28, 0xFF, 0x7E, 0x74, 0x06, 0x00, 0x00, 0xF0 };
+
+// temperature sensors resolution (1 to 12)
+const int TempResolution = 10;
 
 // screen TX and RX pins (RX pin is needed and yet not used)
 const int ScreenTxPin = 10;
 const int ScreenRxPin = 11;
 
 // screen dim button pin
-const int ScreenDimBtnPin = 7;
+//const int ScreenDimBtnPin = 7;
 
 // screen dim values
-const int ScreenDimOn = 140;
-const int ScreenDimOff = 150;
+//const int ScreenDimOn = 140;
+//const int ScreenDimOff = 150;
 
 // AltIMU specific settings
-LSM303::vector<int16_t> CompassMin = LSM303::vector<int16_t> {  +858,   +324,  -2232};
-LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> {  +868,   +340,  -2216};
-
+LSM303::vector<int16_t> CompassMin = LSM303::vector<int16_t> {  +846,   +400,  -2451};
+LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> {  +869,   +423,  -2409};
 
 // AltIMU sensors
 LPS pressureSensor;
@@ -40,26 +50,36 @@ boolean magneticSensorDetected = false;
 char animationChars[] = "^<^>";
 int loadingIndex = 0;
 
-// temperature chip i/o
-OneWire tempIn(DS18S20_PinIn);
-OneWire tempOut(DS18S20_PinOut);
-
 // screen output
 SoftwareSerial screenSerial(ScreenTxPin, ScreenRxPin);
 
 void setup(void) {
+  // for debugging purposes
+  // Serial.begin(9600);
+
+  // setting up screen
   screenSerial.begin(9600);
-
   clearScreen();
-  //  changeScreenBrightness(140);
+  changeScreenBrightness(140);
 
+  // setting up temperature sensors
+  tempSensors.begin();
+
+  // setting the resolution of the temperature sensors
+  tempSensors.setResolution(InTemp, TempResolution);
+  tempSensors.setResolution(OutTemp, TempResolution);
+
+  // setting up Wire instance for pressure and magnetic
+  // sensor
   Wire.begin();
 
+  // setting up atmospheric pressure sensor
   if (pressureSensor.init()) {
     pressureSensorDetected = true;
     pressureSensor.enableDefault();
   }
 
+  // setting up compass
   if (magneticSensor.init()) {
     magneticSensorDetected = true;
     magneticSensor.enableDefault();
@@ -68,15 +88,16 @@ void setup(void) {
     magneticSensor.m_max = CompassMax;
   }
 
-  pinMode(ScreenDimBtnPin, INPUT);
+  //  pinMode(ScreenDimBtnPin, INPUT);
 }
 
 void loop(void) {
-
+  // get temperature values from sensors
+  tempSensors.requestTemperatures();
 
   // temperature is in Celsius
-  float temperatureIn = getTemp(tempIn);
-  float temperatureOut = getTemp(tempOut);
+  float temperatureIn = tempSensors.getTempC(InTemp);
+  float temperatureOut = tempSensors.getTempC(OutTemp);
 
   refreshDisplayFirstLine(temperatureIn, temperatureOut);
 
@@ -102,127 +123,4 @@ void loop(void) {
   refreshDisplaySecondLine(direction, heading, altitude);
 
   waitAndUpdateAnimation(TempRefreshInterval, 4);
-}
-
-// ============================= DISPLAY =============================
-void refreshDisplayFirstLine(float inTemp, float outTemp) {
-  // first line: "I: 25.0 O: 35.0 "
-  changeCursorPosition(0);
-
-  screenSerial.write("I: ");
-
-  String inValue = "";
-  if (inTemp == -1000) {
-    // the temperature sensor is malfunctioning
-    inValue = "n/a ";
-  } else {
-    inValue = String(inTemp, 1);
-  }
-
-  writeValueRightToLeft(inValue, 7, 5);
-
-  changeCursorPosition(7);
-  screenSerial.write(" O:");
-
-  String outValue = "";
-  if (outTemp == -1000) {
-    // the temperature sensor is malfunctioning
-    outValue = "n/a ";
-  } else {
-    outValue = String(outTemp, 1);
-  }
-
-  writeValueRightToLeft(outValue, 15, 5);
-
-  changeCursorPosition(15);
-  screenSerial.write(" ");
-}
-
-void refreshDisplaySecondLine(char dir[], float heading, int altitude) {
-  // second line: "N  358.0o 1000m^"
-  changeCursorPosition(16);
-  screenSerial.write(dir);
-
-  String head = "";
-  if (heading == -1.0) {
-    head = "n/a ";
-  } else {
-    head = String(heading, 1);
-  }
-  writeValueRightToLeft(head, 24, 5);
-
-  changeCursorPosition(24);
-  screenSerial.write("o");
-
-  String alt = "";
-  if (altitude == -1) {
-    alt = "n/a ";
-  } else {
-    alt = String(altitude);
-  }
-  writeValueRightToLeft(alt, 30, 4);
-
-  changeCursorPosition(30);
-  screenSerial.write("m");
-}
-
-void waitAndUpdateAnimation(int totalTime, int timesToUpdateAnimation) {
-  int dividedDelay = totalTime / timesToUpdateAnimation;
-  for (int i = 0; i < timesToUpdateAnimation; i++) {
-    updateAnimation();
-    checkDimButton();
-    delay(dividedDelay);
-  }
-}
-
-void updateAnimation() {
-  // updating the animation symbol (last character on the second line)
-  changeCursorPosition(31);
-
-  screenSerial.write(animationChars[loadingIndex]);
-
-  loadingIndex++;
-  if (loadingIndex == sizeof(animationChars) - 1) {
-    loadingIndex = 0;
-  }
-}
-
-void writeValueRightToLeft(String val, int pos, int maxLen) {
-  for (int i = val.length(), j = 0, len = 0; len <= maxLen; i--, j++, len++) {
-    changeCursorPosition(pos - j);
-
-    if (i >= 0) {
-      screenSerial.write(val[i]);
-    } else {
-      screenSerial.write(" ");
-    }
-  }
-}
-
-void checkDimButton() {
-  if (digitalRead(ScreenDimBtnPin) == HIGH) {
-    changeScreenBrightness(ScreenDimOn);
-  } else {
-    changeScreenBrightness(ScreenDimOff);
-  }
-}
-
-void changeCursorPosition(int pos) {
-  // second line begins from 64
-  if (pos > 15) {
-    pos = (pos - 16) + 64;
-  }
-
-  screenSerial.write(0xFE);
-  screenSerial.write(pos + 128);
-}
-
-void clearScreen() {
-  screenSerial.write(0xFE);
-  screenSerial.write(0x01);
-}
-
-void changeScreenBrightness(int brightness) {
-  screenSerial.write(0x7C);
-  screenSerial.write(brightness);
 }

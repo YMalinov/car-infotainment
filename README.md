@@ -12,6 +12,15 @@ The following modules are used:
 	<li>1x 16x2 SerLCD display </li>
 </ul>
 <br/>
+Currently the following libraries are used:
+<ul>
+	<li>L3G gyroscope library from Pololu</li>
+	<li>LPS pressure sensor library from Pololu</li>
+	<li>LSM303 magnetic sensor library from Pololu</li>
+	<li>OneWire (for the DS18S20 temp sensors)</li>
+	<li>Dallas Temperature Control (for the DS18S20 temp sensors)</li>
+</ul>
+<br/>
 If setup correctly, the screen should display the information in the following way (without the quotes):
 <ul>
 	<li><pre>"I: 25.0 O: 35.0 "</pre> (input and output temperature, respectively)</li>
