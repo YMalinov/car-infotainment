@@ -24,11 +24,15 @@ void refreshDisplayFirstLine(float inTemp, float outTemp) {
   } else {
     outValue = String(outTemp, 1);
   }
-
+  
   writeValueRightToLeft(outValue, 15, 5);
-
+  
   changeCursorPosition(15);
-  screenSerial.write(" ");
+  if (outTemp <= 4 && outTemp != -127.00) {
+    screenSerial.write("*");
+  } else {
+    screenSerial.write(" "); 
+  }
 }
 
 void refreshDisplaySecondLine(char dir[], float heading, int altitude) {
