@@ -7,7 +7,7 @@ I've renamed the AltIMU sensors' libraries, so their names are more descriptive 
 The following modules are used:
 <ul>
 	<li>1x Arduino UNO r3 board </li>
-	<li>2x DS18S20 water proof temperature sensors </li>
+	<li>2x DS18B20 water proof temperature sensors </li>
 	<li>1x AltIMU board </li>
 	<li>1x 16x2 SerLCD display </li>
 </ul>
@@ -17,7 +17,7 @@ Currently the following libraries are used:
 	<li>L3G gyroscope library from Pololu</li>
 	<li>LPS pressure sensor library from Pololu</li>
 	<li>LSM303 magnetic sensor library from Pololu</li>
-	<li>OneWire (for the DS18S20 temp sensors)</li>
+	<li>OneWire (for the DS18B20 temp sensors)</li>
 	<li>Dallas Temperature Control (for the DS18S20 temp sensors)</li>
 </ul>
 <br/>
