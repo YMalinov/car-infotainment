@@ -26,3 +26,10 @@ If setup correctly, the screen should display the information in the following w
 	<li><pre>"I: 25.0 O: 35.0 "</pre> (input and output temperature, respectively)</li>
 	<li><pre>"N  358.0o 1000m^"</pre> (compass direction - N, NE, E, SE, S, SW, W, NW; compass heading in degrees; altitude in meters; and display refresh animation)</li>
 </ul>
+<br/>
+TODO:
+<ol>
+	<li>Make getting temperature values async.</li>
+	<li>Make getting compass and altitude values async.</li>
+	<li>Add a screen dim button and decide where to put it in the car.</li>
+</ol>
