@@ -10,7 +10,7 @@ const int TempRefreshInterval = 2000;
 const int AltIMURefreshInterval = 500;
 
 // temperature sensors OneWire signal pin
-const int TemperatureSensorsPin = 3;
+const int TemperatureSensorsPin = 12;
 
 // temperature chip i/o
 OneWire oneWire(TemperatureSensorsPin);
@@ -23,9 +23,9 @@ DeviceAddress OutTemp = { 0x28, 0xFF, 0x7E, 0x74, 0x06, 0x00, 0x00, 0xF0 };
 // temperature sensors resolution (1 to 12)
 const int TempResolution = 10;
 
-// screen TX and RX pins (RX pin is needed and yet not used)
-const int ScreenTxPin = 10;
-const int ScreenRxPin = 11;
+// screen TX and RX pins (TX pin is needed and yet not used)
+const int ScreenRxPin = 10;
+const int ScreenTxPin = 11;
 
 // screen dim button pin
 //const int ScreenDimBtnPin = 7;
@@ -55,7 +55,7 @@ SoftwareSerial screenSerial(ScreenTxPin, ScreenRxPin);
 
 void setup(void) {
   // for debugging purposes
-  // Serial.begin(9600);
+  Serial.begin(9600);
 
   // setting up screen
   screenSerial.begin(9600);
@@ -92,6 +92,7 @@ void setup(void) {
 }
 
 void loop(void) {
+  Serial.println("start loop");
   // get temperature values from sensors
   tempSensors.requestTemperatures();
 
@@ -100,6 +101,12 @@ void loop(void) {
   float temperatureOut = tempSensors.getTempC(OutTemp);
 
   refreshDisplayFirstLine(temperatureIn, temperatureOut);
+
+  Serial.println("in temp");
+  Serial.println(temperatureIn);
+
+  Serial.println("out temp");
+  Serial.println(temperatureOut);
 
   // heading is in degrees
   float heading = -1.0;
