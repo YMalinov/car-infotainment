@@ -111,6 +111,8 @@ void checkIfShouldUpdateTemperatureValues() {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastTemperatureMillis >= TempRefreshInterval) {
+    lastTemperatureMillis = currentMillis;
+    
     // get temperature values from sensors
     tempSensors.requestTemperatures();
 
@@ -119,8 +121,6 @@ void checkIfShouldUpdateTemperatureValues() {
     float temperatureOut = tempSensors.getTempC(OutTemp);
 
     refreshDisplayFirstLine(temperatureIn, temperatureOut);
-
-    lastTemperatureMillis = currentMillis;
   }
 }
 
@@ -128,6 +128,8 @@ void checkIfShouldUpdateCompassValues() {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastCompassMillis >= CompassRefreshInterval) {
+    lastCompassMillis = currentMillis;
+    
     // heading is in degrees
     float heading = -1.0;
     if (magneticSensorDetected) {
@@ -139,8 +141,6 @@ void checkIfShouldUpdateCompassValues() {
     getHeadingAsString(heading, &direction);
 
     refreshDisplaySecondLineCompass(direction, heading);
-
-    lastCompassMillis = currentMillis;
   }
 }
 
@@ -148,6 +148,8 @@ void checkIfShouldUpdateAltimeterValues() {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastAltimeterMillis >= AltimeterRefreshInterval) {
+    lastAltimeterMillis = currentMillis;
+    
     // altitude is in meters
     int altitude = -1;
     if (pressureSensorDetected) {
@@ -158,8 +160,6 @@ void checkIfShouldUpdateAltimeterValues() {
     }
 
     refreshDisplaySecondLineAltitude(altitude);
-
-    lastAltimeterMillis = currentMillis;
   }
 }
 
@@ -167,9 +167,9 @@ void checkIfShouldUpdateAnimation() {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastAnimationMillis >= AnimationRefreshInterval) {
-    updateAnimation();
-
     lastAnimationMillis = currentMillis;
+    
+    updateAnimation();
   }
 }
 
