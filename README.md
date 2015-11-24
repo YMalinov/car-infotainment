@@ -23,7 +23,7 @@ Currently the following libraries are used:
 <br/>
 If setup correctly, the screen should display the information in the following way (without the quotes):
 <ul>
-	<li><pre>"I: 25.0 O: -5.0*"</pre> (input and output temperature, respectively (the star at the end will be shown, if outside temperatures are under -4.0 degrees))</li>
+	<li><pre>"I: 25.0 O: -5.0*"</pre> (input and output temperature, respectively (the star at the end will be shown, if outside temperatures are under 4.0 degrees))</li>
 	<li><pre>"N  358.0o 1000m^"</pre> (compass direction - N, NE, E, SE, S, SW, W, NW; compass heading in degrees; altitude in meters; and display refresh animation)</li>
 </ul>
 <br/>
