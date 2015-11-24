@@ -24,18 +24,18 @@ void refreshDisplayFirstLine(float inTemp, float outTemp) {
   } else {
     outValue = String(outTemp, 1);
   }
-  
+
   writeValueRightToLeft(outValue, 15, 5);
-  
+
   changeCursorPosition(15);
   if (outTemp <= 4 && outTemp != -127.00) {
     screenSerial.write("*");
   } else {
-    screenSerial.write(" "); 
+    screenSerial.write(" ");
   }
 }
 
-void refreshDisplaySecondLine(char dir[], float heading, int altitude) {
+void refreshDisplaySecondLineCompass(char dir[], float heading) {
   // second line: "N  358.0o 1000m^"
   changeCursorPosition(16);
   screenSerial.write(dir);
@@ -50,7 +50,9 @@ void refreshDisplaySecondLine(char dir[], float heading, int altitude) {
 
   changeCursorPosition(24);
   screenSerial.write("o");
+}
 
+void refreshDisplaySecondLineAltitude(int altitude) {
   String alt = "";
   if (altitude == -1) {
     alt = "n/a ";
@@ -61,15 +63,6 @@ void refreshDisplaySecondLine(char dir[], float heading, int altitude) {
 
   changeCursorPosition(30);
   screenSerial.write("m");
-}
-
-void waitAndUpdateAnimation(int totalTime, int timesToUpdateAnimation) {
-  int dividedDelay = totalTime / timesToUpdateAnimation;
-  for (int i = 0; i < timesToUpdateAnimation; i++) {
-    updateAnimation();
-    //    checkDimButton();
-    delay(dividedDelay);
-  }
 }
 
 void updateAnimation() {

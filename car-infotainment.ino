@@ -7,7 +7,10 @@
 
 // in milliseconds
 const int TempRefreshInterval = 2000;
-const int AltIMURefreshInterval = 500;
+const int AltimeterRefreshInterval = 5000;
+const int CompassRefreshInterval = 300;
+const int AnimationRefreshInterval = 500;
+const int LoopWaitInterval = 50;
 
 // temperature sensors OneWire signal pin
 const int TemperatureSensorsPin = 12;
@@ -53,9 +56,15 @@ int loadingIndex = 0;
 // screen output
 SoftwareSerial screenSerial(ScreenTxPin, ScreenRxPin);
 
+// async update milliseconds
+unsigned long lastTemperatureMillis = millis();
+unsigned long lastAltimeterMillis = millis();
+unsigned long lastCompassMillis = millis();
+unsigned long lastAnimationMillis = millis();
+
 void setup(void) {
   // for debugging purposes
-  Serial.begin(9600);
+  //  Serial.begin(9600);
 
   // setting up screen
   screenSerial.begin(9600);
@@ -87,47 +96,81 @@ void setup(void) {
     magneticSensor.m_min = CompassMin;
     magneticSensor.m_max = CompassMax;
   }
-
-  //  pinMode(ScreenDimBtnPin, INPUT);
 }
 
 void loop(void) {
-  Serial.println("start loop");
-  // get temperature values from sensors
-  tempSensors.requestTemperatures();
+  checkIfShouldUpdateTemperatureValues();
+  checkIfShouldUpdateCompassValues();
+  checkIfShouldUpdateAltimeterValues();
+  checkIfShouldUpdateAnimation();
 
-  // temperature is in Celsius
-  float temperatureIn = tempSensors.getTempC(InTemp);
-  float temperatureOut = tempSensors.getTempC(OutTemp);
-
-  refreshDisplayFirstLine(temperatureIn, temperatureOut);
-
-  Serial.println("in temp");
-  Serial.println(temperatureIn);
-
-  Serial.println("out temp");
-  Serial.println(temperatureOut);
-
-  // heading is in degrees
-  float heading = -1.0;
-  if (magneticSensorDetected) {
-    magneticSensor.read();
-    heading = magneticSensor.heading();
-  }
-
-  char *direction;
-  getHeadingAsString(heading, &direction);
-
-  // altitude is in meters
-  int altitude = -1;
-  if (pressureSensorDetected) {
-    float pressure = pressureSensor.readPressureMillibars();
-    float altitudeAsFloat = pressureSensor.pressureToAltitudeMeters(pressure);
-
-    altitude = (int)altitudeAsFloat;
-  }
-
-  refreshDisplaySecondLine(direction, heading, altitude);
-
-  waitAndUpdateAnimation(TempRefreshInterval, 4);
+  delay(LoopWaitInterval);
 }
+
+void checkIfShouldUpdateTemperatureValues() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - lastTemperatureMillis >= TempRefreshInterval) {
+    // get temperature values from sensors
+    tempSensors.requestTemperatures();
+
+    // temperature is in Celsius
+    float temperatureIn = tempSensors.getTempC(InTemp);
+    float temperatureOut = tempSensors.getTempC(OutTemp);
+
+    refreshDisplayFirstLine(temperatureIn, temperatureOut);
+
+    lastTemperatureMillis = currentMillis;
+  }
+}
+
+void checkIfShouldUpdateCompassValues() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - lastCompassMillis >= CompassRefreshInterval) {
+    // heading is in degrees
+    float heading = -1.0;
+    if (magneticSensorDetected) {
+      magneticSensor.read();
+      heading = magneticSensor.heading();
+    }
+
+    char *direction;
+    getHeadingAsString(heading, &direction);
+
+    refreshDisplaySecondLineCompass(direction, heading);
+
+    lastCompassMillis = currentMillis;
+  }
+}
+
+void checkIfShouldUpdateAltimeterValues() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - lastAltimeterMillis >= AltimeterRefreshInterval) {
+    // altitude is in meters
+    int altitude = -1;
+    if (pressureSensorDetected) {
+      float pressure = pressureSensor.readPressureMillibars();
+      float altitudeAsFloat = pressureSensor.pressureToAltitudeMeters(pressure);
+
+      altitude = (int)altitudeAsFloat;
+    }
+
+    refreshDisplaySecondLineAltitude(altitude);
+
+    lastAltimeterMillis = currentMillis;
+  }
+}
+
+void checkIfShouldUpdateAnimation() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - lastAnimationMillis >= AnimationRefreshInterval) {
+    updateAnimation();
+
+    lastAnimationMillis = currentMillis;
+  }
+}
+
+
