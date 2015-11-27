@@ -6,29 +6,31 @@
 #include <LSM303_Magnet.h>
 
 // in milliseconds
-const int TempRefreshInterval = 2000;
-const int AltimeterRefreshInterval = 5000;
-const int CompassRefreshInterval = 300;
-const int AnimationRefreshInterval = 500;
-const int LoopWaitInterval = 50;
+#define TEMP_REFRESH_INTERVAL       2000
+#define ALTIMETER_REFRESH_INTERVAL  5000
+#define COMPASS_REFRESH_INTERVAL     300
+#define ANIMATION_REFRESH_INTERVAL   500
+#define LOOP_WAIT_INTERVAL            50
 
 // temperature sensors OneWire signal pin
-const int TemperatureSensorsPin = 12;
+#define TEMP_SENSORS_PIN 12
+
+// temperature sensors resolution (9 to 12 inclusive)
+#define TEMP_RESOLUTION 10
+
+// screen TX and RX pins (TX pin is needed and yet not used)
+#define SCREEN_TX_PIN 10
+#define SCREEN_RX_PIN 11
+#define SCREEN_BAUDRATE 9600
+#define SCREEN_BRIGHTNESS 140
 
 // temperature chip i/o
-OneWire oneWire(TemperatureSensorsPin);
+OneWire oneWire(TEMP_SENSORS_PIN);
 DallasTemperature tempSensors(&oneWire);
 
 //DS18S20 hardware addresses
 DeviceAddress InTemp =  { 0x28, 0x4E, 0x76, 0x74, 0x06, 0x00, 0x00, 0xFE };
 DeviceAddress OutTemp = { 0x28, 0xFF, 0x7E, 0x74, 0x06, 0x00, 0x00, 0xF0 };
-
-// temperature sensors resolution (1 to 12)
-const int TempResolution = 10;
-
-// screen TX and RX pins (TX pin is needed and yet not used)
-const int ScreenRxPin = 10;
-const int ScreenTxPin = 11;
 
 // screen dim button pin
 //const int ScreenDimBtnPin = 7;
@@ -40,6 +42,8 @@ const int ScreenTxPin = 11;
 // AltIMU specific settings
 LSM303::vector<int16_t> CompassMin = LSM303::vector<int16_t> {  +846,   +400,  -2451};
 LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> {  +869,   +423,  -2409};
+// LSM303::vector<int16_t> CompassMin = (LSM303::vector<int16_t>){-32767, -32767, -32767};
+// LSM303::vector<int16_t> CompassMax = (LSM303::vector<int16_t>){+32767, +32767, +32767};
 
 // AltIMU sensors
 LPS pressureSensor;
@@ -54,7 +58,7 @@ char animationChars[] = "^<^>";
 int loadingIndex = 0;
 
 // screen output
-SoftwareSerial screenSerial(ScreenTxPin, ScreenRxPin);
+SoftwareSerial screenSerial(SCREEN_TX_PIN, SCREEN_RX_PIN);
 
 // async update milliseconds
 unsigned long lastTemperatureMillis = millis();
@@ -64,19 +68,19 @@ unsigned long lastAnimationMillis = millis();
 
 void setup(void) {
   // for debugging purposes
-  //  Serial.begin(9600);
+//    Serial.begin(9600);
 
   // setting up screen
-  screenSerial.begin(9600);
+  screenSerial.begin(SCREEN_BAUDRATE);
   clearScreen();
-  changeScreenBrightness(140);
+  changeScreenBrightness(SCREEN_BRIGHTNESS);
 
   // setting up temperature sensors
   tempSensors.begin();
 
   // setting the resolution of the temperature sensors
-  tempSensors.setResolution(InTemp, TempResolution);
-  tempSensors.setResolution(OutTemp, TempResolution);
+  tempSensors.setResolution(InTemp, TEMP_RESOLUTION);
+  tempSensors.setResolution(OutTemp, TEMP_RESOLUTION);
 
   // setting up Wire instance for pressure and magnetic
   // sensor
@@ -104,13 +108,13 @@ void loop(void) {
   checkIfShouldUpdateAltimeterValues();
   checkIfShouldUpdateAnimation();
 
-  delay(LoopWaitInterval);
+  delay(LOOP_WAIT_INTERVAL);
 }
 
 void checkIfShouldUpdateTemperatureValues() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastTemperatureMillis >= TempRefreshInterval) {
+  if (currentMillis - lastTemperatureMillis >= TEMP_REFRESH_INTERVAL) {
     lastTemperatureMillis = currentMillis;
     
     // get temperature values from sensors
@@ -127,7 +131,7 @@ void checkIfShouldUpdateTemperatureValues() {
 void checkIfShouldUpdateCompassValues() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastCompassMillis >= CompassRefreshInterval) {
+  if (currentMillis - lastCompassMillis >= COMPASS_REFRESH_INTERVAL) {
     lastCompassMillis = currentMillis;
     
     // heading is in degrees
@@ -147,7 +151,7 @@ void checkIfShouldUpdateCompassValues() {
 void checkIfShouldUpdateAltimeterValues() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastAltimeterMillis >= AltimeterRefreshInterval) {
+  if (currentMillis - lastAltimeterMillis >= ALTIMETER_REFRESH_INTERVAL) {
     lastAltimeterMillis = currentMillis;
     
     // altitude is in meters
@@ -166,11 +170,9 @@ void checkIfShouldUpdateAltimeterValues() {
 void checkIfShouldUpdateAnimation() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastAnimationMillis >= AnimationRefreshInterval) {
+  if (currentMillis - lastAnimationMillis >= ANIMATION_REFRESH_INTERVAL) {
     lastAnimationMillis = currentMillis;
     
     updateAnimation();
   }
 }
-
-
