@@ -1,5 +1,5 @@
-#ifndef L3G_h
-#define L3G_h
+#ifndef L3G_h_Gyro
+#define L3G_h_Gyro
 
 #include <Arduino.h> // for byte data type
 

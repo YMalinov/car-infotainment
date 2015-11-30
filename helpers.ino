@@ -4,7 +4,7 @@ char Directions[][9] = {
 
 void getHeadingAsString(float heading, char **buffer) {
   if (heading == -1.0) {
-    *buffer = "->";
+    *buffer = arrow;
   } else {
     int index = (int)((heading + 23) / 45);
     *buffer = Directions[index];

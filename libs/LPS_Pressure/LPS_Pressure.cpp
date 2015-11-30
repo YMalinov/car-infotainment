@@ -22,9 +22,29 @@ LPS::LPS(void)
   // Pololu board pulls SA0 high, so default assumption is that it is
   // high
   address = SA0_HIGH_ADDRESS;
+
+  io_timeout = 0;  // 0 = no timeout
+  did_timeout = false;
 }
 
 // Public Methods ////////////////////////////////////////////////////
+
+bool LPS::timeoutOccurred()
+{
+  bool tmp = did_timeout;
+  did_timeout = false;
+  return tmp;
+}
+
+void LPS::setTimeout(unsigned int timeout)
+{
+  io_timeout = timeout;
+}
+
+unsigned int LPS::getTimeout()
+{
+  return io_timeout;
+}
 
 // sets or detects device type and slave address; returns bool indicating success
 bool LPS::init(deviceType device, byte sa0)
@@ -126,7 +146,13 @@ int32_t LPS::readPressureRaw(void)
   Wire.endTransmission();
   Wire.requestFrom(address, (byte)3);
 
-  while (Wire.available() < 3);
+  unsigned int millis_start = millis();
+  while (Wire.available() < 3) {
+    if (io_timeout > 0 && ((unsigned int)millis() - millis_start) > io_timeout) {
+      did_timeout = true;
+      return -1;
+    }
+  }
 
   uint8_t pxl = Wire.read();
   uint8_t pl = Wire.read();
@@ -157,7 +183,14 @@ int16_t LPS::readTemperatureRaw(void)
   Wire.endTransmission();
   Wire.requestFrom(address, (byte)2);
 
-  while (Wire.available() < 2);
+  unsigned int millis_start = millis();
+  while (Wire.available() < 2) {
+    if (io_timeout > 0 && ((unsigned int)millis() - millis_start) > io_timeout)
+    {
+      did_timeout = true;
+      return -1;
+    }
+  }
 
   uint8_t tl = Wire.read();
   uint8_t th = Wire.read();

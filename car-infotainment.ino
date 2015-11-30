@@ -6,11 +6,11 @@
 #include <LSM303_Magnet.h>
 
 // in milliseconds
-#define TEMP_REFRESH_INTERVAL       2000
-#define ALTIMETER_REFRESH_INTERVAL  5000
-#define COMPASS_REFRESH_INTERVAL     300
-#define ANIMATION_REFRESH_INTERVAL   500
-#define LOOP_WAIT_INTERVAL            50
+#define TEMP_REFRESH_INTERVAL       3000ul
+#define COMPASS_REFRESH_INTERVAL     600ul
+#define ALTIMETER_REFRESH_INTERVAL  5000ul
+#define ANIMATION_REFRESH_INTERVAL   500ul
+#define LOOP_WAIT_INTERVAL            50ul
 
 // temperature sensors OneWire signal pin
 #define TEMP_SENSORS_PIN 12
@@ -23,6 +23,9 @@
 #define SCREEN_RX_PIN 11
 #define SCREEN_BAUDRATE 9600
 #define SCREEN_BRIGHTNESS 140
+
+#define PRESSURE_READ_TIMEOUT          200
+#define MAGNETIC_SENSOR_READ_TIMEOUT   200
 
 // temperature chip i/o
 OneWire oneWire(TEMP_SENSORS_PIN);
@@ -57,18 +60,21 @@ boolean magneticSensorDetected = false;
 char animationChars[] = "^<^>";
 int loadingIndex = 0;
 
+// arrow showed on no AltIMU response
+char arrow[] = "->";
+
 // screen output
 SoftwareSerial screenSerial(SCREEN_TX_PIN, SCREEN_RX_PIN);
 
 // async update milliseconds
 unsigned long lastTemperatureMillis = millis();
-unsigned long lastAltimeterMillis = millis();
 unsigned long lastCompassMillis = millis();
+unsigned long lastAltimeterMillis = millis();
 unsigned long lastAnimationMillis = millis();
 
 void setup(void) {
   // for debugging purposes
-//    Serial.begin(9600);
+  // Serial.begin(9600);
 
   // setting up screen
   screenSerial.begin(SCREEN_BAUDRATE);
@@ -87,12 +93,14 @@ void setup(void) {
   Wire.begin();
 
   // setting up atmospheric pressure sensor
+  pressureSensor.setTimeout(PRESSURE_READ_TIMEOUT);
   if (pressureSensor.init()) {
     pressureSensorDetected = true;
     pressureSensor.enableDefault();
   }
 
   // setting up compass
+  magneticSensor.setTimeout(MAGNETIC_SENSOR_READ_TIMEOUT);
   if (magneticSensor.init()) {
     magneticSensorDetected = true;
     magneticSensor.enableDefault();
@@ -103,18 +111,22 @@ void setup(void) {
 }
 
 void loop(void) {
-  checkIfShouldUpdateTemperatureValues();
-  checkIfShouldUpdateCompassValues();
-  checkIfShouldUpdateAltimeterValues();
-  checkIfShouldUpdateAnimation();
+  if (!checkIfShouldUpdateTemperatureValues(TEMP_REFRESH_INTERVAL)) {
+    checkIfShouldUpdateCompassValues(COMPASS_REFRESH_INTERVAL);
+    checkIfShouldUpdateAltimeterValues(ALTIMETER_REFRESH_INTERVAL);
+  }
 
+  checkIfShouldUpdateAnimation(ANIMATION_REFRESH_INTERVAL);
   delay(LOOP_WAIT_INTERVAL);
 }
 
-void checkIfShouldUpdateTemperatureValues() {
+// all methods below will return true if their screen values
+// have been updated
+boolean checkIfShouldUpdateTemperatureValues(unsigned long interval) {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastTemperatureMillis >= TEMP_REFRESH_INTERVAL) {
+  if (currentMillis - lastTemperatureMillis >= interval) {
+   // Serial.println("will update temperatures");
     lastTemperatureMillis = currentMillis;
     
     // get temperature values from sensors
@@ -125,33 +137,48 @@ void checkIfShouldUpdateTemperatureValues() {
     float temperatureOut = tempSensors.getTempC(OutTemp);
 
     refreshDisplayFirstLine(temperatureIn, temperatureOut);
+
+    return true;
   }
+
+  return false;
 }
 
-void checkIfShouldUpdateCompassValues() {
+boolean checkIfShouldUpdateCompassValues(unsigned long interval) {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastCompassMillis >= COMPASS_REFRESH_INTERVAL) {
+  if (currentMillis - lastCompassMillis >= interval) {
+   // Serial.println("will update compass");
     lastCompassMillis = currentMillis;
     
     // heading is in degrees
     float heading = -1.0;
     if (magneticSensorDetected) {
       magneticSensor.read();
-      heading = magneticSensor.heading();
+
+      if (!magneticSensor.timeoutOccurred()) {
+        heading = magneticSensor.heading();
+      }
+    } else {
+      magneticSensorDetected = magneticSensor.init();
     }
 
     char *direction;
     getHeadingAsString(heading, &direction);
 
     refreshDisplaySecondLineCompass(direction, heading);
+
+    return true;
   }
+
+  return false;
 }
 
-void checkIfShouldUpdateAltimeterValues() {
+boolean checkIfShouldUpdateAltimeterValues(unsigned long interval) {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastAltimeterMillis >= ALTIMETER_REFRESH_INTERVAL) {
+  if (currentMillis - lastAltimeterMillis >= interval) {
+   // Serial.println("will update altimeter");
     lastAltimeterMillis = currentMillis;
     
     // altitude is in meters
@@ -160,19 +187,32 @@ void checkIfShouldUpdateAltimeterValues() {
       float pressure = pressureSensor.readPressureMillibars();
       float altitudeAsFloat = pressureSensor.pressureToAltitudeMeters(pressure);
 
-      altitude = (int)altitudeAsFloat;
+      if (!pressureSensor.timeoutOccurred()) {
+        altitude = (int)altitudeAsFloat;
+      }
+    } else {
+      pressureSensorDetected = pressureSensor.init();
     }
 
     refreshDisplaySecondLineAltitude(altitude);
+
+    return true;
   }
+
+  return false;
 }
 
-void checkIfShouldUpdateAnimation() {
+boolean checkIfShouldUpdateAnimation(unsigned long interval) {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - lastAnimationMillis >= ANIMATION_REFRESH_INTERVAL) {
+  if (currentMillis - lastAnimationMillis >= interval) {
+   // Serial.println("will update animation");
     lastAnimationMillis = currentMillis;
     
     updateAnimation();
+
+    return true;
   }
+
+  return false;
 }

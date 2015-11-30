@@ -1,5 +1,5 @@
-#ifndef LPS_h_Gyro
-#define LPS_h_Gyro
+#ifndef LPS_h_Pressure
+#define LPS_h_Pressure
 
 #include <Arduino.h> // for byte data type
 
@@ -92,6 +92,10 @@ class LPS
     float readTemperatureF(void);
     int16_t readTemperatureRaw(void);
 
+    void setTimeout(unsigned int timeout);
+    unsigned int getTimeout(void);
+    bool timeoutOccurred(void);
+
     static float pressureToAltitudeMeters(float pressure_mbar, float altimeter_setting_mbar = 1013.25);
     static float pressureToAltitudeFeet(float pressure_inHg, float altimeter_setting_inHg = 29.9213);
 
@@ -105,6 +109,9 @@ class LPS
     bool detectDeviceAndAddress(deviceType device, sa0State sa0);
     bool detectDevice(deviceType device);
     int testWhoAmI(byte address);
+    
+    unsigned int io_timeout;
+    bool did_timeout;
 };
 
 #endif

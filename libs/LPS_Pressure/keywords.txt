@@ -14,6 +14,9 @@ readTemperatureF	KEYWORD2
 readTemperatureRaw	KEYWORD2
 pressureToAltitudeMeters	KEYWORD2
 pressureToAltitudeFeet	KEYWORD2
+setTimeout KEYWORD2
+getTimeout KEYWORD2
+timeoutOccurred KEYWORD2
 
 device_331AP	LITERAL1
 device_25H	LITERAL1
