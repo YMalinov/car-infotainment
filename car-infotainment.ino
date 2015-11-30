@@ -24,8 +24,12 @@
 #define SCREEN_BAUDRATE 9600
 #define SCREEN_BRIGHTNESS 140
 
-#define PRESSURE_READ_TIMEOUT          200
-#define MAGNETIC_SENSOR_READ_TIMEOUT   200
+// AltIMU sensor timeouts
+#define PRESSURE_READ_TIMEOUT         200
+#define MAGNETIC_SENSOR_READ_TIMEOUT  200
+
+// will turn on led on pin 13 while reading sensors
+#define LOOP_DELAY_LED_PIN 13
 
 // temperature chip i/o
 OneWire oneWire(TEMP_SENSORS_PIN);
@@ -49,8 +53,8 @@ LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> {  +869,   +423,  -
 // LSM303::vector<int16_t> CompassMax = (LSM303::vector<int16_t>){+32767, +32767, +32767};
 
 // AltIMU sensors
-LPS pressureSensor;
-LSM303 magneticSensor;
+LPS pressureSensor = LPS();
+LSM303 magneticSensor = LSM303();
 
 // AltIMU sensors detection
 boolean pressureSensorDetected = false;
@@ -81,13 +85,23 @@ void setup(void) {
   clearScreen();
   changeScreenBrightness(SCREEN_BRIGHTNESS);
 
+  setupTemperatureSensors();
+  setupAltIMUSensors();
+
+  pinMode(LOOP_DELAY_LED_PIN, OUTPUT);
+  digitalWrite(LOOP_DELAY_LED_PIN, LOW);
+}
+
+void setupTemperatureSensors() {
   // setting up temperature sensors
   tempSensors.begin();
 
   // setting the resolution of the temperature sensors
   tempSensors.setResolution(InTemp, TEMP_RESOLUTION);
   tempSensors.setResolution(OutTemp, TEMP_RESOLUTION);
+}
 
+void setupAltIMUSensors() {
   // setting up Wire instance for pressure and magnetic
   // sensor
   Wire.begin();
@@ -117,7 +131,10 @@ void loop(void) {
   }
 
   checkIfShouldUpdateAnimation(ANIMATION_REFRESH_INTERVAL);
+
+  digitalWrite(LOOP_DELAY_LED_PIN, LOW);
   delay(LOOP_WAIT_INTERVAL);
+  digitalWrite(LOOP_DELAY_LED_PIN, HIGH);
 }
 
 // all methods below will return true if their screen values
@@ -126,9 +143,9 @@ boolean checkIfShouldUpdateTemperatureValues(unsigned long interval) {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastTemperatureMillis >= interval) {
-   // Serial.println("will update temperatures");
+    // Serial.println("will update temperatures");
     lastTemperatureMillis = currentMillis;
-    
+
     // get temperature values from sensors
     tempSensors.requestTemperatures();
 
@@ -148,9 +165,9 @@ boolean checkIfShouldUpdateCompassValues(unsigned long interval) {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastCompassMillis >= interval) {
-   // Serial.println("will update compass");
+    // Serial.println("will update compass");
     lastCompassMillis = currentMillis;
-    
+
     // heading is in degrees
     float heading = -1.0;
     if (magneticSensorDetected) {
@@ -178,9 +195,9 @@ boolean checkIfShouldUpdateAltimeterValues(unsigned long interval) {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastAltimeterMillis >= interval) {
-   // Serial.println("will update altimeter");
+    // Serial.println("will update altimeter");
     lastAltimeterMillis = currentMillis;
-    
+
     // altitude is in meters
     int altitude = -1;
     if (pressureSensorDetected) {
@@ -206,9 +223,9 @@ boolean checkIfShouldUpdateAnimation(unsigned long interval) {
   unsigned long currentMillis = millis();
 
   if (currentMillis - lastAnimationMillis >= interval) {
-   // Serial.println("will update animation");
+    // Serial.println("will update animation");
     lastAnimationMillis = currentMillis;
-    
+
     updateAnimation();
 
     return true;

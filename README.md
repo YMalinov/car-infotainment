@@ -1,8 +1,8 @@
 car-infotainment
 ==========
 
-A work-in-progress arduino car infotainment display. It currently has two temperature sensors and an AltIMU board which feeds the Arduino with an altitude and compass reading. Currently, the measuring units are the following: temperature in degrees Celsius, compass heading in degrees and altitude reading in meters. <br/>
-I've renamed the AltIMU sensors' libraries, so their names are more descriptive (<a href="https://github.com/pololu/l3g-arduino">L3G</a>, <a href="https://github.com/pololu/lps-arduino">LPS</a> and <a href="https://github.com/pololu/minimu-9-ahrs-arduino">LSM303</a>). The temperature, compass, altitude and animation refresh intervals are pretty much asynchronously configurable.
+A work-in-progress arduino car infotainment display. It currently has two temperature sensors and an AltIMU board which feeds the Arduino with an altitude and compass reading. Currently, the measuring units are the following: temperature in degrees Celsius, compass heading in degrees and altitude reading in meters. The Arduino LED (pin 13) lights on, while the sensors are being read.<br/>
+I've renamed the AltIMU sensors' libraries, so their names are more descriptive (<a href="https://github.com/pololu/l3g-arduino">L3G</a>, <a href="https://github.com/pololu/lps-arduino">LPS</a> and <a href="https://github.com/pololu/minimu-9-ahrs-arduino">LSM303</a>). The temperature, compass, altitude and animation refresh intervals are pretty much asynchronously configurable. Added a read timeout functionality in the LPS pressure sensor library.
 
 The following modules are used:
 <ul>
