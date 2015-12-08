@@ -28,7 +28,7 @@ void refreshDisplayFirstLine(float inTemp, float outTemp) {
   writeValueRightToLeft(outValue, 15, 5);
 
   changeCursorPosition(15);
-  if (outTemp <= 4 && outTemp != -127.00) {
+  if (outTemp <= TEMP_FREEZE_WARNING && outTemp != -127.00) {
     screenSerial.write("*");
   } else {
     screenSerial.write(" ");
@@ -63,6 +63,11 @@ void refreshDisplaySecondLineAltitude(int altitude) {
 
   changeCursorPosition(30);
   screenSerial.write("m");
+}
+
+void displayIceWarning() {
+  changeCursorPosition(16);
+  screenSerial.write(ICE_WARNING_STRING);
 }
 
 void updateAnimation() {

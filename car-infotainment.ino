@@ -12,11 +12,17 @@
 #define ANIMATION_REFRESH_INTERVAL   500ul
 #define LOOP_WAIT_INTERVAL            50ul
 
+// ice warning iteration delay in milliseconds (will not be accurate)
+#define ICE_WARNING_DELAY           8000ul
+
 // temperature sensors OneWire signal pin
 #define TEMP_SENSORS_PIN 12
 
 // temperature sensors resolution (9 to 12 inclusive)
 #define TEMP_RESOLUTION 9
+
+// every temperature below this is considered freezing
+#define TEMP_FREEZE_WARNING 4
 
 // screen TX and RX pins (TX pin is needed and yet not used)
 #define SCREEN_TX_PIN 11
@@ -30,6 +36,9 @@
 
 // will turn on led on pin 13 while reading sensors
 #define LOOP_DELAY_LED_PIN 13
+
+// ice warning string
+#define ICE_WARNING_STRING "risk of ice"
 
 // temperature chip i/o
 OneWire oneWire(TEMP_SENSORS_PIN);
@@ -76,9 +85,15 @@ unsigned long lastCompassMillis = millis();
 unsigned long lastAltimeterMillis = millis();
 unsigned long lastAnimationMillis = millis();
 
+// ice warning iterations
+int currentIceWarningIterations = 0;
+int maxIceWarningIterations = ICE_WARNING_DELAY / LOOP_WAIT_INTERVAL;
+boolean showIceWarning = false;
+boolean shownIceWarning = false;
+
 void setup(void) {
   // for debugging purposes
-//  Serial.begin(9600);
+  // Serial.begin(9600);
 
   // setting up screen
   screenSerial.begin(SCREEN_BAUDRATE);
@@ -127,9 +142,17 @@ void setupAltIMUSensors() {
 void loop(void) {
   checkIfShouldUpdateAnimation(ANIMATION_REFRESH_INTERVAL);
   
-  if (!checkIfShouldUpdateTemperatureValues(TEMP_REFRESH_INTERVAL)) {
+  if (!checkIfShouldUpdateTemperatureValues(TEMP_REFRESH_INTERVAL) && !showIceWarning) {
     checkIfShouldUpdateCompassValues(COMPASS_REFRESH_INTERVAL);
     checkIfShouldUpdateAltimeterValues(ALTIMETER_REFRESH_INTERVAL);
+  } else if (showIceWarning) {
+    displayIceWarning();
+
+    currentIceWarningIterations++;
+    if (currentIceWarningIterations == maxIceWarningIterations) {
+      shownIceWarning = true;
+      showIceWarning = false;
+    }
   }
   
   digitalWrite(LOOP_DELAY_LED_PIN, LOW);
@@ -152,6 +175,10 @@ boolean checkIfShouldUpdateTemperatureValues(unsigned long interval) {
     // temperature is in Celsius
     float temperatureIn = tempSensors.getTempC(InTemp);
     float temperatureOut = tempSensors.getTempC(OutTemp);
+
+    if (!shownIceWarning && temperatureOut <= TEMP_FREEZE_WARNING) {
+      showIceWarning = true;
+    }
 
     refreshDisplayFirstLine(temperatureIn, temperatureOut);
 
