@@ -117,6 +117,11 @@ void clearScreen() {
   screenSerial.write(0x01);
 }
 
+void clearSecondLine() {
+  changeCursorPosition(16);
+  screenSerial.write("                ");
+}
+
 void changeScreenBrightness(int brightness) {
   screenSerial.write(0x7C);
   screenSerial.write(brightness);

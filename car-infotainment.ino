@@ -13,7 +13,7 @@
 #define LOOP_WAIT_INTERVAL            50ul
 
 // ice warning iteration delay in milliseconds (will not be accurate)
-#define ICE_WARNING_DELAY           8000ul
+#define ICE_WARNING_DELAY          10000ul
 
 // temperature sensors OneWire signal pin
 #define TEMP_SENSORS_PIN 12
@@ -152,6 +152,7 @@ void loop(void) {
     if (currentIceWarningIterations == maxIceWarningIterations) {
       shownIceWarning = true;
       showIceWarning = false;
+      clearSecondLine();
     }
   }
   
@@ -174,7 +175,7 @@ boolean checkIfShouldUpdateTemperatureValues(unsigned long interval) {
 
     // temperature is in Celsius
     float temperatureIn = tempSensors.getTempC(InTemp);
-    float temperatureOut = tempSensors.getTempC(OutTemp);
+    float temperatureOut =  -4; //tempSensors.getTempC(OutTemp);
 
     if (!shownIceWarning && temperatureOut <= TEMP_FREEZE_WARNING) {
       showIceWarning = true;
@@ -206,7 +207,6 @@ boolean checkIfShouldUpdateCompassValues(unsigned long interval) {
         magneticSensorDetected = false;
       }
     } else {
-//      Serial.println("must setup from compass");
       setupAltIMUSensors();
     }
 
