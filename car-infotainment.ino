@@ -175,7 +175,7 @@ boolean checkIfShouldUpdateTemperatureValues(unsigned long interval) {
 
     // temperature is in Celsius
     float temperatureIn = tempSensors.getTempC(InTemp);
-    float temperatureOut =  -4; //tempSensors.getTempC(OutTemp);
+    float temperatureOut = tempSensors.getTempC(OutTemp);
 
     if (!shownIceWarning && temperatureOut <= TEMP_FREEZE_WARNING) {
       showIceWarning = true;
