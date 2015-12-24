@@ -40,13 +40,17 @@
 // ice warning string
 #define ICE_WARNING_STRING "risk of ice"
 
+// as the AltIMU is mounted sideways, we need a compass offset to correct
+// its values
+#define COMPASS_OFFSET -267
+
 // temperature chip i/o
 OneWire oneWire(TEMP_SENSORS_PIN);
 DallasTemperature tempSensors(&oneWire);
 
 //DS18S20 hardware addresses
-DeviceAddress InTemp =  { 0x28, 0x4E, 0x76, 0x74, 0x06, 0x00, 0x00, 0xFE };
-DeviceAddress OutTemp = { 0x28, 0xFF, 0x7E, 0x74, 0x06, 0x00, 0x00, 0xF0 };
+DeviceAddress InTemp = { 0x28, 0xFF, 0x7E, 0x74, 0x06, 0x00, 0x00, 0xF0 };
+DeviceAddress OutTemp =  { 0x28, 0x4E, 0x76, 0x74, 0x06, 0x00, 0x00, 0xFE };
 
 // screen dim button pin
 //const int ScreenDimBtnPin = 7;
@@ -56,10 +60,10 @@ DeviceAddress OutTemp = { 0x28, 0xFF, 0x7E, 0x74, 0x06, 0x00, 0x00, 0xF0 };
 //const int ScreenDimOff = 150;
 
 // AltIMU specific settings
-LSM303::vector<int16_t> CompassMin = LSM303::vector<int16_t> {  +846,   +400,  -2451};
-LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> {  +869,   +423,  -2409};
-// LSM303::vector<int16_t> CompassMin = (LSM303::vector<int16_t>){-32767, -32767, -32767};
-// LSM303::vector<int16_t> CompassMax = (LSM303::vector<int16_t>){+32767, +32767, +32767};
+//LSM303::vector<int16_t> CompassMin = LSM303::vector<int16_t> { +1551,  -2209,  +4092};
+//LSM303::vector<int16_t> CompassMax = LSM303::vector<int16_t> { +1568,  -2192,  +4105};
+ LSM303::vector<int16_t> CompassMin = (LSM303::vector<int16_t>){-32767, -32767, -32767};
+ LSM303::vector<int16_t> CompassMax = (LSM303::vector<int16_t>){+32767, +32767, +32767};
 
 // AltIMU sensors
 LPS pressureSensor = LPS();
@@ -203,6 +207,7 @@ boolean checkIfShouldUpdateCompassValues(unsigned long interval) {
 
       if (!magneticSensor.timeoutOccurred()) {
         heading = magneticSensor.heading();
+        heading += COMPASS_OFFSET;
       } else {
         magneticSensorDetected = false;
       }
